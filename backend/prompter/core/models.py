@@ -14,6 +14,7 @@ class Prompt(BaseModel):
     tags: list[str] = Field(default_factory=list)
     tool: str = "generic"
     variables: list[str] = Field(default_factory=list)
+    category: str = ""
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -24,6 +25,7 @@ class PromptListItem(BaseModel):
     description: str = ""
     tags: list[str] = Field(default_factory=list)
     tool: str = "generic"
+    category: str = ""
     updated_at: datetime
 
 
@@ -34,6 +36,7 @@ class PromptCreate(BaseModel):
     tags: list[str] = Field(default_factory=list)
     tool: str = "generic"
     variables: list[str] = Field(default_factory=list)
+    category: str = ""
 
 
 class PromptUpdate(BaseModel):

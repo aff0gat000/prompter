@@ -5,9 +5,15 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+import json
+import shutil
+
 import frontmatter
 
 from .models import Prompt, PromptCreate, PromptListItem, PromptUpdate
+
+TEMPLATES_DIR = Path(__file__).parent.parent / "templates"
+DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 def _sanitize_filename(name: str) -> str:
@@ -45,14 +51,14 @@ class PromptStore:
             tags=meta.get("tags", []),
             tool=meta.get("tool", "generic"),
             variables=meta.get("variables", []),
+            category=meta.get("category", ""),
             created_at=meta.get("created_at", datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc)),
             updated_at=meta.get("updated_at", datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)),
         )
 
     def _save(self, prompt: Prompt) -> Path:
         path = self._path(prompt.id)
-        post = frontmatter.Post(
-            prompt.content,
+        meta = dict(
             name=prompt.name,
             description=prompt.description,
             tags=prompt.tags,
@@ -61,6 +67,9 @@ class PromptStore:
             created_at=prompt.created_at.isoformat(),
             updated_at=prompt.updated_at.isoformat(),
         )
+        if prompt.category:
+            meta["category"] = prompt.category
+        post = frontmatter.Post(prompt.content, **meta)
         path.write_text(frontmatter.dumps(post) + "\n")
         return path
 
@@ -72,7 +81,8 @@ class PromptStore:
             p = self._load(f)
             items.append(PromptListItem(
                 id=p.id, name=p.name, description=p.description,
-                tags=p.tags, tool=p.tool, updated_at=p.updated_at,
+                tags=p.tags, tool=p.tool, category=p.category,
+                updated_at=p.updated_at,
             ))
         return items
 
@@ -92,6 +102,7 @@ class PromptStore:
             tags=data.tags,
             tool=data.tool,
             variables=data.variables,
+            category=data.category,
             created_at=now,
             updated_at=now,
         )
@@ -123,3 +134,57 @@ class PromptStore:
         if not path.exists():
             raise FileNotFoundError(f"Prompt not found: {id_}")
         path.unlink()
+
+
+class TemplateStore:
+    def __init__(self, directory: Path = TEMPLATES_DIR) -> None:
+        self.directory = directory
+        self._loader = PromptStore(directory)
+
+    def list_templates(self) -> list[PromptListItem]:
+        if not self.directory.exists():
+            return []
+        items = []
+        for f in sorted(self.directory.glob("*.md")):
+            p = self._loader._load(f)
+            items.append(PromptListItem(
+                id=p.id, name=p.name, description=p.description,
+                tags=p.tags, tool=p.tool, category=p.category,
+                updated_at=p.updated_at,
+            ))
+        return items
+
+    def get_template(self, id_: str) -> Prompt:
+        path = self._loader._path(id_)
+        if not path.exists():
+            raise FileNotFoundError(f"Template not found: {id_}")
+        return self._loader._load(path)
+
+    def clone_template(self, template_id: str, new_name: str, target_store: PromptStore) -> Prompt:
+        template = self.get_template(template_id)
+        data = PromptCreate(
+            name=new_name,
+            description=template.description,
+            content=template.content,
+            tags=template.tags,
+            tool=template.tool,
+            variables=template.variables,
+            category=template.category,
+        )
+        target_store.init()
+        return target_store.create_prompt(data)
+
+
+def load_hints() -> list[dict]:
+    path = DATA_DIR / "hints.json"
+    if not path.exists():
+        return []
+    return json.loads(path.read_text())
+
+
+def load_scaffold(provider: str) -> str:
+    path = DATA_DIR / "scaffolds.json"
+    if not path.exists():
+        return ""
+    scaffolds = json.loads(path.read_text())
+    return scaffolds.get(provider, scaffolds.get("generic", ""))

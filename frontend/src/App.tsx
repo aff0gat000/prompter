@@ -2,9 +2,10 @@ import { useState } from 'react'
 import Layout from './components/Layout'
 import PromptList from './components/PromptList'
 import PromptEditor from './components/PromptEditor'
+import TemplateLibrary from './components/TemplateLibrary'
 
 export default function App() {
-  const [view, setView] = useState<'list' | 'edit'>('list')
+  const [view, setView] = useState<'list' | 'edit' | 'templates'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -23,10 +24,23 @@ export default function App() {
     setSelectedId(null)
   }
 
+  const handleTemplateCloned = (id: string) => {
+    setSelectedId(id)
+    setView('edit')
+    setRefreshKey((k) => k + 1)
+  }
+
   return (
     <Layout>
       {view === 'list' ? (
-        <PromptList onSelect={handleSelect} onCreate={handleCreate} refreshKey={refreshKey} />
+        <PromptList
+          onSelect={handleSelect}
+          onCreate={handleCreate}
+          onBrowseTemplates={() => setView('templates')}
+          refreshKey={refreshKey}
+        />
+      ) : view === 'templates' ? (
+        <TemplateLibrary onBack={handleBack} onCloned={handleTemplateCloned} />
       ) : (
         <PromptEditor
           promptId={selectedId}

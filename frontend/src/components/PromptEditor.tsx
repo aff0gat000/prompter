@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react'
-import { getPrompt, createPrompt, updatePrompt, renderPrompt } from '../api'
+import React, { useEffect, useState, useRef } from 'react'
+import { getPrompt, createPrompt, updatePrompt, renderPrompt, getScaffold } from '../api'
 import type { Prompt } from '../types'
+import HintsPanel from './HintsPanel'
 
 interface Props {
   promptId: string | null
@@ -18,6 +19,7 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
   const [preview, setPreview] = useState('')
   const [varInputs, setVarInputs] = useState<Record<string, string>>({})
   const isNew = !promptId
+  const prevTool = useRef(tool)
 
   useEffect(() => {
     if (promptId) {
@@ -35,11 +37,31 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
     }
   }, [promptId])
 
+  const handleToolChange = async (newTool: string) => {
+    const oldTool = prevTool.current
+    setTool(newTool)
+    prevTool.current = newTool
+    if (isNew && !content.trim() && newTool !== oldTool) {
+      try {
+        const s = await getScaffold(newTool)
+        if (s.content) setContent(s.content)
+      } catch {}
+    }
+  }
+
+  const handleLoadScaffold = async () => {
+    if (content.trim() && !confirm('This will replace current content. Continue?')) return
+    try {
+      const s = await getScaffold(tool)
+      if (s.content) setContent(s.content)
+    } catch {}
+  }
+
   const handleSave = async () => {
     const tagList = tags.split(',').map((t) => t.trim()).filter(Boolean)
     const varList = variables.split(',').map((v) => v.trim()).filter(Boolean)
     if (isNew) {
-      await createPrompt({ name, description, content, tags: tagList, tool, variables: varList })
+      await createPrompt({ name, description, content, tags: tagList, tool, variables: varList, category: '' })
     } else {
       await updatePrompt(promptId, { name, description, content, tags: tagList, tool, variables: varList })
     }
@@ -94,7 +116,7 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
               <label className="block text-sm font-medium text-gray-700 mb-1">Provider / Tool</label>
               <input
                 value={tool}
-                onChange={(e) => setTool(e.target.value)}
+                onChange={(e) => handleToolChange(e.target.value)}
                 placeholder="openai, claude, groq, ollama..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
                 list="provider-suggestions"
@@ -116,7 +138,15 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Content</label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-sm font-medium text-gray-700">Content</label>
+              <button
+                onClick={handleLoadScaffold}
+                className="text-xs text-blue-600 hover:underline"
+              >
+                Load scaffold
+              </button>
+            </div>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -131,7 +161,8 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
             {isNew ? 'Create' : 'Save'}
           </button>
         </div>
-        <div>
+        <div className="space-y-4">
+          <HintsPanel content={content} />
           <h3 className="text-sm font-medium text-gray-700 mb-2">Preview / Render</h3>
           {!isNew && Object.keys(varInputs).length > 0 && (
             <div className="space-y-2 mb-4">

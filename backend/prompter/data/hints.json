@@ -1,0 +1,50 @@
+[
+  {
+    "id": "role",
+    "label": "Define a clear role or persona",
+    "description": "Start with who the AI should be (e.g., 'You are a senior Python developer')",
+    "pattern": "(?i)(you are|act as|role:|persona:|as a|pretend you)"
+  },
+  {
+    "id": "task",
+    "label": "Specify the task clearly",
+    "description": "State exactly what you want the AI to do",
+    "pattern": "(?i)(your task|please|generate|create|write|analyze|summarize|explain|translate|review)"
+  },
+  {
+    "id": "format",
+    "label": "Set output format constraints",
+    "description": "Tell the AI how to structure its response",
+    "pattern": "(?i)(output format|respond in|respond with|format:|return as|use (json|markdown|xml|yaml|bullet|numbered))"
+  },
+  {
+    "id": "examples",
+    "label": "Add examples for few-shot learning",
+    "description": "Provide input/output examples to guide behavior",
+    "pattern": "(?i)(example|for instance|input:.*output:|e\\.g\\.|sample|such as:)"
+  },
+  {
+    "id": "boundaries",
+    "label": "Set boundaries - what NOT to do",
+    "description": "Specify constraints and things to avoid",
+    "pattern": "(?i)(do not|don't|never|avoid|must not|refrain|don't include|without)"
+  },
+  {
+    "id": "reasoning",
+    "label": "Include step-by-step reasoning",
+    "description": "Ask for chain-of-thought or structured thinking",
+    "pattern": "(?i)(step by step|chain of thought|think through|reasoning|let'?s think|explain your)"
+  },
+  {
+    "id": "context",
+    "label": "Provide context or background information",
+    "description": "Give the AI relevant background to work with",
+    "pattern": "(?i)(context:|background:|given that|assuming|the following|here is|below is)"
+  },
+  {
+    "id": "tone",
+    "label": "Specify tone and style",
+    "description": "Define the voice, tone, or writing style",
+    "pattern": "(?i)(tone:|style:|formal|informal|professional|friendly|concise|verbose|technical|simple)"
+  }
+]

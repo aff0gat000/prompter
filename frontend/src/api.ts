@@ -1,4 +1,4 @@
-import type { Prompt, PromptCreate, PromptListItem } from './types'
+import type { Prompt, PromptCreate, PromptListItem, Hint, Scaffold } from './types'
 
 const BASE = '/prompts'
 
@@ -48,4 +48,29 @@ export async function renderPrompt(id: string, variables: Record<string, string>
   if (!res.ok) throw new Error('Failed to render prompt')
   const data = await res.json()
   return data.rendered
+}
+
+export async function listTemplates(): Promise<PromptListItem[]> {
+  const res = await fetch('/templates')
+  if (!res.ok) throw new Error('Failed to list templates')
+  return res.json()
+}
+
+export async function cloneTemplate(templateId: string, name?: string): Promise<Prompt> {
+  const url = name ? `/templates/${templateId}/clone?name=${encodeURIComponent(name)}` : `/templates/${templateId}/clone`
+  const res = await fetch(url, { method: 'POST' })
+  if (!res.ok) throw new Error('Failed to clone template')
+  return res.json()
+}
+
+export async function getHints(): Promise<Hint[]> {
+  const res = await fetch('/hints')
+  if (!res.ok) throw new Error('Failed to get hints')
+  return res.json()
+}
+
+export async function getScaffold(provider: string): Promise<Scaffold> {
+  const res = await fetch(`/scaffold/${encodeURIComponent(provider)}`)
+  if (!res.ok) throw new Error('Failed to get scaffold')
+  return res.json()
 }

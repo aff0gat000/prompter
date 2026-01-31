@@ -13,7 +13,7 @@ from rich.table import Table
 
 from .core.models import PromptCreate, PromptUpdate
 from .core.renderer import render_prompt
-from .core.store import PromptStore
+from .core.store import PromptStore, TemplateStore, load_scaffold
 from .tools.exporters import export_prompt, init_config, list_providers
 
 app = typer.Typer(help="Prompter - Prompt engineering toolkit")
@@ -156,6 +156,54 @@ def providers():
     console.print()
     console.print("[dim]Any unlisted provider defaults to 'messages' (OpenAI-compatible).[/dim]")
     console.print(f"[dim]Edit {store.directory / 'providers.yaml'} to add or override providers.[/dim]")
+
+
+@app.command()
+def templates():
+    """List available starter templates."""
+    ts = TemplateStore()
+    items = ts.list_templates()
+    if not items:
+        console.print("No templates found.")
+        return
+    table = Table()
+    table.add_column("ID")
+    table.add_column("Name")
+    table.add_column("Category")
+    table.add_column("Description")
+    for item in items:
+        table.add_row(item.id, item.name, item.category, item.description)
+    console.print(table)
+
+
+@app.command()
+def clone(
+    template_id: str,
+    name: Optional[str] = typer.Option(None, "--name", "-n", help="Name for the new prompt"),
+):
+    """Clone a template into your prompts directory."""
+    ts = TemplateStore()
+    store = _store()
+    new_name = name or template_id
+    try:
+        prompt = ts.clone_template(template_id, new_name, store)
+        console.print(f"Cloned template '{template_id}' as '{prompt.id}'")
+    except FileNotFoundError:
+        console.print(f"[red]Template not found: {template_id}[/red]")
+        raise typer.Exit(1)
+    except FileExistsError:
+        console.print(f"[red]Prompt already exists: {new_name}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def scaffold(provider: str):
+    """Print a scaffold prompt for a given provider."""
+    content = load_scaffold(provider)
+    if not content:
+        console.print(f"[yellow]No scaffold found for '{provider}', using generic.[/yellow]")
+        content = load_scaffold("generic")
+    console.print(content)
 
 
 def serve(

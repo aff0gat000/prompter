@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .core.models import Prompt, PromptCreate, PromptListItem, PromptUpdate, RenderRequest
 from .core.renderer import render_prompt
-from .core.store import PromptStore
+from .core.store import PromptStore, TemplateStore, load_hints, load_scaffold
 from .tools.exporters import export_prompt, list_providers
 
 app = FastAPI(title="Prompter API", version="0.1.0")
@@ -24,6 +24,10 @@ DEFAULT_DIR = os.environ.get("PROMPTER_DIR", os.path.join(os.getcwd(), "prompts"
 
 def _store() -> PromptStore:
     return PromptStore(DEFAULT_DIR)
+
+
+def _template_store() -> TemplateStore:
+    return TemplateStore()
 
 
 @app.get("/prompts", response_model=list[PromptListItem])
@@ -89,3 +93,37 @@ def export(prompt_id: str, fmt: str = "text"):
         raise HTTPException(404, "Prompt not found")
     result = export_prompt(prompt, fmt, directory=DEFAULT_DIR)
     return {"exported": result, "format": fmt}
+
+
+# --- Templates ---
+
+@app.get("/templates", response_model=list[PromptListItem])
+def list_templates():
+    return _template_store().list_templates()
+
+
+@app.post("/templates/{template_id}/clone", response_model=Prompt, status_code=201)
+def clone_template(template_id: str, name: str | None = None):
+    ts = _template_store()
+    new_name = name or template_id
+    try:
+        return ts.clone_template(template_id, new_name, _store())
+    except FileNotFoundError:
+        raise HTTPException(404, "Template not found")
+    except FileExistsError:
+        raise HTTPException(409, "Prompt already exists with that name")
+
+
+# --- Hints ---
+
+@app.get("/hints")
+def get_hints():
+    return load_hints()
+
+
+# --- Scaffolds ---
+
+@app.get("/scaffold/{provider}")
+def get_scaffold(provider: str):
+    content = load_scaffold(provider)
+    return {"provider": provider, "content": content}

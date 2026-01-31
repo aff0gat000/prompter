@@ -5,10 +5,11 @@ import type { PromptListItem } from '../types'
 interface Props {
   onSelect: (id: string) => void
   onCreate: () => void
+  onBrowseTemplates: () => void
   refreshKey: number
 }
 
-export default function PromptList({ onSelect, onCreate, refreshKey }: Props) {
+export default function PromptList({ onSelect, onCreate, onBrowseTemplates, refreshKey }: Props) {
   const [prompts, setPrompts] = useState<PromptListItem[]>([])
   const [search, setSearch] = useState('')
   const [tagFilter, setTagFilter] = useState('')
@@ -50,6 +51,12 @@ export default function PromptList({ onSelect, onCreate, refreshKey }: Props) {
           onChange={(e) => setTagFilter(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-md text-sm w-full sm:w-48"
         />
+        <button
+          onClick={onBrowseTemplates}
+          className="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-md text-sm hover:bg-gray-200"
+        >
+          Browse Templates
+        </button>
         <button
           onClick={onCreate}
           className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700"
