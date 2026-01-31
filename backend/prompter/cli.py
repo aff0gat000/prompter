@@ -14,7 +14,7 @@ from rich.table import Table
 from .core.models import PromptCreate, PromptUpdate
 from .core.renderer import render_prompt
 from .core.store import PromptStore
-from .tools.exporters import export_prompt, list_providers
+from .tools.exporters import export_prompt, init_config, list_providers
 
 app = typer.Typer(help="Prompter - Prompt engineering toolkit")
 console = Console()
@@ -28,10 +28,12 @@ def _store() -> PromptStore:
 
 @app.command()
 def init():
-    """Initialize a prompts directory."""
+    """Initialize a prompts directory with default config."""
     store = _store()
     store.init()
+    config_path = init_config(store.directory)
     console.print(f"Initialized prompts directory: {store.directory}")
+    console.print(f"Provider config: {config_path}")
 
 
 @app.command("list")
@@ -130,25 +132,30 @@ def export(
     name: str,
     fmt: str = typer.Option("text", "--format", "-f", help="Format or provider name (messages, markdown, text, openai, groq, ollama, claude, etc.)"),
 ):
-    """Export a prompt for any provider. Use --format with a format name (messages, markdown, text) or a provider name (openai, groq, ollama, claude, etc.)."""
+    """Export a prompt for any provider. Use --format with a format name (messages, markdown, text) or a provider name (openai, groq, ollama, claude, etc.). Reads providers.yaml for custom providers."""
     store = _store()
     prompt = store.get_prompt(name)
-    result = export_prompt(prompt, fmt)
+    result = export_prompt(prompt, fmt, directory=store.directory)
     console.print(result)
 
 
 @app.command()
 def providers():
-    """List all supported providers and their export formats."""
+    """List all supported providers and their export formats. Includes custom providers from providers.yaml."""
+    store = _store()
     table = Table()
     table.add_column("Provider")
     table.add_column("Export Format")
-    for entry in list_providers():
-        table.add_row(entry["provider"], entry["format"])
+    table.add_column("Source")
+    from .tools.exporters import BUILTIN_PROVIDERS, load_config
+    merged = load_config(store.directory)
+    for name, fmt in sorted(merged.items()):
+        source = "built-in" if name in BUILTIN_PROVIDERS and BUILTIN_PROVIDERS.get(name) == fmt else "providers.yaml"
+        table.add_row(name, fmt, source)
     console.print(table)
     console.print()
     console.print("[dim]Any unlisted provider defaults to 'messages' (OpenAI-compatible).[/dim]")
-    console.print("[dim]You can use any string as a tool name in your prompts.[/dim]")
+    console.print(f"[dim]Edit {store.directory / 'providers.yaml'} to add or override providers.[/dim]")
 
 
 def serve(

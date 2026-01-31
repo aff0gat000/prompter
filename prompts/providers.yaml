@@ -1,0 +1,19 @@
+# Prompter provider registry
+# Maps provider names to export formats: messages, markdown, or text.
+#
+# Built-in providers are always available. Add your own here to extend
+# or override them. Changes take effect immediately — no restart needed.
+#
+# Format reference:
+#   messages  - OpenAI chat completions JSON [{"role":"system","content":"..."}]
+#   markdown  - Raw markdown (Claude, Gemini system prompts)
+#   text      - Plain text
+#
+# Examples:
+#   my-local-llm: messages
+#   custom-api: markdown
+
+providers:
+  # Add custom providers below. These merge with (and override) built-ins.
+  # my-company-llm: messages
+  # internal-api: markdown

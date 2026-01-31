@@ -382,6 +382,44 @@ export PROMPTER_DIR=~/my-prompts
 prompter init
 ```
 
+### Custom Provider Registry (`providers.yaml`)
+
+When you run `prompter init`, it creates a `providers.yaml` file in your prompts directory. Edit this file to add custom providers or override built-in ones — changes take effect immediately with no restart needed.
+
+```yaml
+# prompts/providers.yaml
+providers:
+  # Add your own providers
+  my-company-llm: messages
+  internal-api: markdown
+  local-mixtral: messages
+
+  # Override a built-in (e.g. force Claude to use messages format)
+  # claude: messages
+```
+
+Valid format values: `messages`, `markdown`, `text`.
+
+Your custom entries merge with the built-in registry. To see the full merged list:
+
+```bash
+prompter providers
+```
+
+```
+┏━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
+┃ Provider         ┃ Export Format ┃ Source         ┃
+┡━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
+│ claude           │ markdown      │ built-in       │
+│ groq             │ messages      │ built-in       │
+│ my-company-llm   │ messages      │ providers.yaml │
+│ openai           │ messages      │ built-in       │
+│ ...              │               │                │
+└──────────────────┴───────────────┴────────────────┘
+```
+
+Any provider not in the registry (built-in or custom) automatically defaults to `messages` format.
+
 ## Running Tests
 
 ```bash

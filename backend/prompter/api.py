@@ -27,7 +27,7 @@ def _store() -> PromptStore:
 
 
 @app.get("/prompts", response_model=list[PromptListItem])
-def list_prompts():
+def list_prompts_route():
     return _store().list_prompts()
 
 
@@ -78,7 +78,7 @@ def render(prompt_id: str, req: RenderRequest):
 
 @app.get("/providers")
 def get_providers():
-    return list_providers()
+    return list_providers(directory=DEFAULT_DIR)
 
 
 @app.post("/prompts/{prompt_id}/export")
@@ -87,8 +87,5 @@ def export(prompt_id: str, fmt: str = "text"):
         prompt = _store().get_prompt(prompt_id)
     except FileNotFoundError:
         raise HTTPException(404, "Prompt not found")
-    try:
-        result = export_prompt(prompt, fmt)
-    except ValueError as e:
-        raise HTTPException(400, str(e))
+    result = export_prompt(prompt, fmt, directory=DEFAULT_DIR)
     return {"exported": result, "format": fmt}
