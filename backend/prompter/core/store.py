@@ -7,7 +7,7 @@ from pathlib import Path
 
 import frontmatter
 
-from .models import Prompt, PromptCreate, PromptListItem, PromptUpdate, Tool
+from .models import Prompt, PromptCreate, PromptListItem, PromptUpdate
 
 
 def _sanitize_filename(name: str) -> str:
@@ -43,7 +43,7 @@ class PromptStore:
             description=meta.get("description", ""),
             content=post.content,
             tags=meta.get("tags", []),
-            tool=Tool(meta.get("tool", "generic")),
+            tool=meta.get("tool", "generic"),
             variables=meta.get("variables", []),
             created_at=meta.get("created_at", datetime.fromtimestamp(stat.st_ctime, tz=timezone.utc)),
             updated_at=meta.get("updated_at", datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)),
@@ -56,7 +56,7 @@ class PromptStore:
             name=prompt.name,
             description=prompt.description,
             tags=prompt.tags,
-            tool=prompt.tool.value,
+            tool=prompt.tool,
             variables=prompt.variables,
             created_at=prompt.created_at.isoformat(),
             updated_at=prompt.updated_at.isoformat(),

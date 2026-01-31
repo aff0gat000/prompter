@@ -90,18 +90,21 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
               />
             </div>
-            <div className="w-40">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tool</label>
-              <select
+            <div className="w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Provider / Tool</label>
+              <input
                 value={tool}
                 onChange={(e) => setTool(e.target.value)}
+                placeholder="openai, claude, groq, ollama..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="generic">Generic</option>
-                <option value="claude">Claude</option>
-                <option value="openai">OpenAI</option>
-                <option value="gemini">Gemini</option>
-              </select>
+                list="provider-suggestions"
+              />
+              <datalist id="provider-suggestions">
+                {['generic', 'openai', 'claude', 'groq', 'together', 'mistral',
+                  'ollama', 'lmstudio', 'gemini', 'deepseek', 'perplexity',
+                  'fireworks', 'openrouter', 'azure', 'cohere', 'vllm', 'litellm',
+                ].map((p) => <option key={p} value={p} />)}
+              </datalist>
             </div>
           </div>
           <div>

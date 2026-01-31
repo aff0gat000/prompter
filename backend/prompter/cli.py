@@ -14,7 +14,7 @@ from rich.table import Table
 from .core.models import PromptCreate, PromptUpdate
 from .core.renderer import render_prompt
 from .core.store import PromptStore
-from .tools.exporters import export_prompt
+from .tools.exporters import export_prompt, list_providers
 
 app = typer.Typer(help="Prompter - Prompt engineering toolkit")
 console = Console()
@@ -48,7 +48,7 @@ def list_prompts():
     table.add_column("Tags")
     table.add_column("Tool")
     for item in items:
-        table.add_row(item.name, item.description, ", ".join(item.tags), item.tool.value)
+        table.add_row(item.name, item.description, ", ".join(item.tags), item.tool)
     console.print(table)
 
 
@@ -62,7 +62,7 @@ def show(name: str):
         console.print(f"[dim]{prompt.description}[/dim]")
     if prompt.tags:
         console.print(f"Tags: {', '.join(prompt.tags)}")
-    console.print(f"Tool: {prompt.tool.value}")
+    console.print(f"Tool: {prompt.tool}")
     if prompt.variables:
         console.print(f"Variables: {', '.join(prompt.variables)}")
     console.print()
@@ -128,13 +128,27 @@ def render(
 @app.command()
 def export(
     name: str,
-    fmt: str = typer.Option("text", "--format", "-f", help="claude|openai|text"),
+    fmt: str = typer.Option("text", "--format", "-f", help="Format or provider name (messages, markdown, text, openai, groq, ollama, claude, etc.)"),
 ):
-    """Export a prompt in a specific format."""
+    """Export a prompt for any provider. Use --format with a format name (messages, markdown, text) or a provider name (openai, groq, ollama, claude, etc.)."""
     store = _store()
     prompt = store.get_prompt(name)
     result = export_prompt(prompt, fmt)
     console.print(result)
+
+
+@app.command()
+def providers():
+    """List all supported providers and their export formats."""
+    table = Table()
+    table.add_column("Provider")
+    table.add_column("Export Format")
+    for entry in list_providers():
+        table.add_row(entry["provider"], entry["format"])
+    console.print(table)
+    console.print()
+    console.print("[dim]Any unlisted provider defaults to 'messages' (OpenAI-compatible).[/dim]")
+    console.print("[dim]You can use any string as a tool name in your prompts.[/dim]")
 
 
 def serve(

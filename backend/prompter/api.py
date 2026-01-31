@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.models import Prompt, PromptCreate, PromptListItem, PromptUpdate, RenderRequest
 from .core.renderer import render_prompt
 from .core.store import PromptStore
-from .tools.exporters import export_prompt
+from .tools.exporters import export_prompt, list_providers
 
 app = FastAPI(title="Prompter API", version="0.1.0")
 
@@ -74,6 +74,11 @@ def render(prompt_id: str, req: RenderRequest):
     except ValueError as e:
         raise HTTPException(400, str(e))
     return {"rendered": result}
+
+
+@app.get("/providers")
+def get_providers():
+    return list_providers()
 
 
 @app.post("/prompts/{prompt_id}/export")
