@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { listTemplates, cloneTemplate } from '../api'
 import type { PromptListItem } from '../types'
 

@@ -1,6 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { getPrompt, createPrompt, updatePrompt, renderPrompt, getScaffold } from '../api'
-import type { Prompt } from '../types'
 import HintsPanel from './HintsPanel'
 
 interface Props {
@@ -124,7 +123,7 @@ export default function PromptEditor({ promptId, onBack, onSaved }: Props) {
               <datalist id="provider-suggestions">
                 {['generic', 'openai', 'claude', 'groq', 'together', 'mistral',
                   'ollama', 'lmstudio', 'gemini', 'deepseek', 'perplexity',
-                  'fireworks', 'openrouter', 'azure', 'cohere', 'vllm', 'litellm',
+                  'fireworks', 'openrouter', 'azure', 'cohere', 'vllm', 'litellm', 'copilot',
                 ].map((p) => <option key={p} value={p} />)}
               </datalist>
             </div>

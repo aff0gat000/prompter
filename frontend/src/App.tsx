@@ -3,9 +3,10 @@ import Layout from './components/Layout'
 import PromptList from './components/PromptList'
 import PromptEditor from './components/PromptEditor'
 import TemplateLibrary from './components/TemplateLibrary'
+import UsageGuide from './components/UsageGuide'
 
 export default function App() {
-  const [view, setView] = useState<'list' | 'edit' | 'templates'>('list')
+  const [view, setView] = useState<'list' | 'edit' | 'templates' | 'guide'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -31,7 +32,7 @@ export default function App() {
   }
 
   return (
-    <Layout>
+    <Layout onGuide={() => setView('guide')}>
       {view === 'list' ? (
         <PromptList
           onSelect={handleSelect}
@@ -41,6 +42,8 @@ export default function App() {
         />
       ) : view === 'templates' ? (
         <TemplateLibrary onBack={handleBack} onCloned={handleTemplateCloned} />
+      ) : view === 'guide' ? (
+        <UsageGuide onBack={handleBack} />
       ) : (
         <PromptEditor
           promptId={selectedId}

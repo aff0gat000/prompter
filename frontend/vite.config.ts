@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/prompts': 'http://localhost:8000',
+      '/templates': 'http://localhost:8000',
+      '/hints': 'http://localhost:8000',
+      '/scaffold': 'http://localhost:8000',
+      '/providers': 'http://localhost:8000',
     },
   },
 })

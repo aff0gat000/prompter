@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { getHints } from '../api'
 import type { Hint } from '../types'
 

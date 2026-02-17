@@ -65,6 +65,7 @@ BUILTIN_PROVIDERS: dict[str, str] = {
     "anthropic":   "markdown",
     "gemini":      "markdown",
     "google":      "markdown",
+    "copilot":     "markdown",
     "generic":     "text",
 }
 

@@ -26,6 +26,7 @@ Prompter uses a **provider registry** that maps provider names to export formats
 | litellm | messages | LiteLLM proxy |
 | claude, anthropic | markdown | Anthropic Claude API |
 | gemini, google | markdown | Google Gemini API |
+| copilot | markdown | GitHub Copilot custom instructions |
 | generic | text | Plain text |
 | *(any other string)* | messages | Defaults to OpenAI-compatible |
 
@@ -347,6 +348,211 @@ messages.append({"role": "user", "content": "Hello!"})
 response = client.chat.completions.create(model="local-model", messages=messages)
 print(response.choices[0].message.content)
 ```
+
+## Usage Guide
+
+Prompter follows a simple three-step workflow:
+
+1. **Pick a starting point** — browse the starter templates or create a prompt from scratch
+2. **Customize** — write your prompt, add variables, and check the best-practices hints
+3. **Export** — export for your provider and integrate with your code or tool
+
+Below are end-to-end examples for the most popular providers.
+
+### Example: Claude (Backend Engineer)
+
+Create a backend-engineering prompt for Claude:
+
+```bash
+prompter create backend-engineer \
+  --desc "Senior backend engineer assistant" \
+  --tags "code,backend,claude" \
+  --tool claude \
+  --content "You are a senior backend engineer specializing in {{language}}.
+
+## Task
+Help the developer with backend tasks: API design, database queries, system architecture, debugging, and code review.
+
+## Instructions
+- Think step by step before answering
+- Prioritize correctness, then performance, then readability
+- Follow {{framework}} conventions and idioms
+- Point out security issues and edge cases proactively
+
+## Constraints
+- Do not suggest frontend changes unless explicitly asked
+- Do not generate boilerplate without explaining the design decision
+- If uncertain about requirements, ask for clarification
+
+## Output Format
+Respond with concise explanations followed by code blocks. Use markdown."
+```
+
+Render and export:
+
+```bash
+prompter render backend-engineer --var language="Python" --var framework="FastAPI"
+prompter export backend-engineer --format claude
+```
+
+Use with the Anthropic SDK:
+
+```python
+import anthropic, subprocess
+
+client = anthropic.Anthropic()
+
+result = subprocess.run(
+    ["prompter", "export", "backend-engineer", "--format", "claude"],
+    capture_output=True, text=True,
+)
+
+message = client.messages.create(
+    model="claude-sonnet-4-5-20250929",
+    max_tokens=1024,
+    system=result.stdout,  # markdown system prompt
+    messages=[{"role": "user", "content": "Design a rate limiter middleware for FastAPI"}],
+)
+print(message.content[0].text)
+```
+
+### Example: ChatGPT / OpenAI
+
+Create the same prompt for ChatGPT:
+
+```bash
+prompter create backend-engineer-gpt \
+  --desc "Senior backend engineer assistant" \
+  --tags "code,backend,openai" \
+  --tool openai \
+  --content "You are a senior backend engineer specializing in {{language}}.
+
+## Task
+Help the developer with backend tasks: API design, database queries, system architecture, debugging, and code review.
+
+## Instructions
+- Prioritize correctness, then performance, then readability
+- Follow {{framework}} conventions and idioms
+- Point out security issues and edge cases proactively
+
+## Constraints
+- Do not suggest frontend changes unless explicitly asked
+- If uncertain about requirements, ask for clarification
+
+## Output Format
+Respond with concise explanations followed by code blocks."
+```
+
+Export and use with the OpenAI SDK:
+
+```bash
+prompter export backend-engineer-gpt --format openai
+```
+
+```python
+from openai import OpenAI
+import json, subprocess
+
+client = OpenAI()
+
+result = subprocess.run(
+    ["prompter", "export", "backend-engineer-gpt", "--format", "openai"],
+    capture_output=True, text=True,
+)
+messages = json.loads(result.stdout)  # [{"role": "system", "content": "..."}]
+messages.append({"role": "user", "content": "Design a rate limiter middleware for Express.js"})
+
+response = client.chat.completions.create(model="gpt-4o", messages=messages)
+print(response.choices[0].message.content)
+```
+
+### Example: Gemini / Google
+
+```bash
+prompter create backend-engineer-gemini \
+  --desc "Senior backend engineer assistant" \
+  --tags "code,backend,gemini" \
+  --tool gemini \
+  --content "You are a senior backend engineer specializing in {{language}}.
+
+# Task
+Help the developer with backend tasks: API design, database queries, system architecture, debugging, and code review.
+
+# Instructions
+- Be helpful and accurate
+- Follow {{framework}} conventions and idioms
+- Provide structured responses when possible
+- Point out security issues and edge cases proactively
+
+# Constraints
+- Do not suggest frontend changes unless explicitly asked
+- If uncertain about requirements, ask for clarification"
+```
+
+Export and use with the Google GenAI SDK:
+
+```bash
+prompter export backend-engineer-gemini --format gemini
+```
+
+```python
+from google import genai
+import subprocess
+
+client = genai.Client()
+
+result = subprocess.run(
+    ["prompter", "export", "backend-engineer-gemini", "--format", "gemini"],
+    capture_output=True, text=True,
+)
+
+response = client.models.generate_content(
+    model="gemini-2.0-flash",
+    config={"system_instruction": result.stdout},  # markdown system prompt
+    contents="Design a connection pool for PostgreSQL in Go",
+)
+print(response.text)
+```
+
+### Example: GitHub Copilot
+
+Copilot uses custom instructions as markdown files. Export your prompt and save it as `.github/copilot-instructions.md` in your repository — Copilot Chat will follow it automatically.
+
+```bash
+prompter create backend-engineer-copilot \
+  --desc "Backend coding conventions for Copilot" \
+  --tags "code,backend,copilot" \
+  --tool copilot \
+  --content "You are a coding assistant for this project.
+
+## Project Context
+This is a {{language}} backend using {{framework}}.
+
+## Code Style
+- Follow the existing code style and conventions in this repository
+- Use descriptive variable and function names
+- Keep functions short and focused on a single responsibility
+
+## Preferences
+- Prefer simple, readable solutions over clever ones
+- Include error handling for all external calls (DB, HTTP, file I/O)
+- Write docstrings for public functions
+- Use the project's existing patterns for logging and configuration
+
+## Constraints
+- Do not modify unrelated code
+- Do not add new dependencies without justification
+- Do not generate boilerplate tests — write meaningful assertions"
+```
+
+Export and copy to your repo:
+
+```bash
+prompter render backend-engineer-copilot --var language="TypeScript" --var framework="NestJS"
+prompter export backend-engineer-copilot --format copilot > .github/copilot-instructions.md
+```
+
+Copilot Chat will now follow these instructions for every suggestion in the repository. You can also paste the exported markdown into **Copilot Chat > Settings > Custom Instructions** in VS Code.
 
 ## Web UI
 
